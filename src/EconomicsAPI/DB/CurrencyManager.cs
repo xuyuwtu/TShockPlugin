@@ -3,7 +3,6 @@ using EconomicsAPI.Enumerates;
 using EconomicsAPI.EventArgs.PlayerEventArgs;
 using EconomicsAPI.Events;
 using MySql.Data.MySqlClient;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
 using TShockAPI;
 using TShockAPI.DB;
@@ -56,7 +55,7 @@ public class CurrencyManager
 
     public void UpdataAll()
     {
-        foreach(var curr in this.Currencys)
+        foreach (var curr in this.Currencys)
         {
             if (!this.Update(curr))
             {
@@ -107,7 +106,7 @@ public class CurrencyManager
                 Change = amount,
                 CurrentType = CurrencyUpdateType.Added,
                 Player = player,
-                Current = this.GetUserCurrency(name,type).Number
+                Current = this.GetUserCurrency(name, type).Number
             };
             if (PlayerHandler.PlayerCurrencyUpdate(args))
             {
@@ -168,14 +167,14 @@ public class CurrencyManager
         }
         foreach (var rro in success)
         {
-            this.DeductUserCurrency(name, rro.Number, rro.CurrencyType);
+            this.DeductUserCurrency(name, rro.Number * count, rro.CurrencyType);
         }
         return true;
     }
 
     public bool DeductUserCurrency(string name, params RedemptionRelationshipsOption[] options)
     {
-        var success = options.Where(r => this.GetUserCurrency(name, r.CurrencyType).Number  >= r.Number);
+        var success = options.Where(r => this.GetUserCurrency(name, r.CurrencyType).Number >= r.Number);
         if (success.Count() != options.Count())
         {
             return false;

@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework;
 using MonoMod.RuntimeDetour;
 using Newtonsoft.Json;
 using Rests;
-using System.Text;
 using System.Text.RegularExpressions;
 using Terraria;
 using Terraria.GameContent.Creative;
@@ -17,11 +16,10 @@ public partial class Plugin : LazyPlugin
 {
     public override string Author => "少司命";// 插件作者
 
-    public override string Description => "服务器工具";// 插件说明
+    public override string Description => GetString("服务器工具");// 插件说明
 
-    public override string Name => "ServerTools";// 插件名字
-
-    public override Version Version => new Version(1, 1, 8, 1);// 插件版本
+    public override string Name => System.Reflection.Assembly.GetExecutingAssembly().GetName().Name!;
+    public override Version Version => new Version(1, 1, 8, 5);// 插件版本
 
     private DateTime LastCommandUseTime = DateTime.Now;
 
@@ -37,7 +35,7 @@ public partial class Plugin : LazyPlugin
 
     public Plugin(Main game) : base(game)
     {
-        
+
     }
 
     private RestCommand[] addRestCommands = null!;
@@ -64,6 +62,7 @@ public partial class Plugin : LazyPlugin
         Commands.ChatCommands.Add(new Command("servertool.set.journey", this.JourneyDiff, "旅途难度", "journeydiff"));
         Commands.ChatCommands.Add(new Command("servertool.user.dead", this.DeathRank, "死亡排行", "deadrank"));
         Commands.ChatCommands.Add(new Command("servertool.user.online", this.OnlineRank, "在线排行", "onlinerank"));
+        Commands.ChatCommands.Add(new Command("servertool.user.cmd", this.OthersCmd, "oc"));
         GetDataHandlers.NewProjectile.Register(this.NewProj);
         GetDataHandlers.ItemDrop.Register(this.OnItemDrop);
         GetDataHandlers.KillMe.Register(this.KillMe);
@@ -84,6 +83,7 @@ public partial class Plugin : LazyPlugin
         On.OTAPI.Hooks.MessageBuffer.InvokeGetData += this.MessageBuffer_InvokeGetData;
         this.HandleCommandLine(Environment.GetCommandLineArgs());
     }
+
     protected override void Dispose(bool disposing)
     {
         if (disposing)
@@ -154,7 +154,7 @@ public partial class Plugin : LazyPlugin
             }
         }
     }
-    
+
     private bool MessageBuffer_InvokeGetData(On.OTAPI.Hooks.MessageBuffer.orig_InvokeGetData orig, MessageBuffer instance, ref byte packetId, ref int readOffset, ref int start, ref int length, ref int messageType, int maxPackets)
     {
 
@@ -192,7 +192,7 @@ public partial class Plugin : LazyPlugin
         if (Config.Instance.NpcProtectList.Contains(args.Npc.netID))
         {
             args.Handled = true;
-            TShock.Players[args.Player.whoAmI].SendInfoMessage("[ServerTools] " + args.Npc.FullName + GetString(" 被系统保护"));
+            TShock.Players[args.Player.whoAmI].SendInfoMessage(GetString($"[ServerTools] {args.Npc.FullName} 被系统保护"));
         }
     }
 
@@ -226,7 +226,7 @@ public partial class Plugin : LazyPlugin
             if (account != null)
             {
                 var Timezone = TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).Hours.ToString("+#;-#");
-                
+
 
                 if (DateTime.TryParse(account.LastAccessed, out var LastSeen))
                 {
@@ -263,7 +263,7 @@ public partial class Plugin : LazyPlugin
     }
 
     public static void RestPlayerCtor(Action<TSRestPlayer, string, TShockAPI.Group> orig, TSRestPlayer self, string name, TShockAPI.Group group)
-    { 
+    {
         self.Account = new()
         {
             Name = name,

@@ -3,7 +3,6 @@ using LazyAPI;
 using Newtonsoft.Json.Linq;
 using Rests;
 using System.Reflection;
-using System.Text;
 using System.Web;
 using Terraria;
 using TerrariaApi.Server;
@@ -15,25 +14,19 @@ namespace ChattyBridge;
 public class Plugin : LazyPlugin
 {
     public override string Author => "少司命";
-
     public override string Description => Assembly.GetExecutingAssembly().GetName().Name!;
-
     public override string Name => Assembly.GetExecutingAssembly().GetName().Name!;
+    public override Version Version => new Version(1, 0, 1, 3);
 
-    public override Version Version => new Version(1, 0, 0, 5);
-
-    private HttpClient Client { get; set; }
-
-    public const string RestAPI = "/chat";
+    private readonly HttpClient _client  = new ();
 
     public Plugin(Main game) : base(game)
     {
-        this.Client = new HttpClient();
     }
 
     public override void Initialize()
     {
-        TShock.RestApi.Register(RestAPI, this.Receive);
+        TShock.RestApi.Register("/chat", HandleMsg);
         ServerApi.Hooks.ServerChat.Register(this, this.OnChat);
         ServerApi.Hooks.NetGreetPlayer.Register(this, this.OnGreet);
         ServerApi.Hooks.ServerLeave.Register(this, this.OnLeave);
@@ -55,89 +48,99 @@ public class Plugin : LazyPlugin
     }
 
 
-    private object Receive(RestRequestArgs args)
+    private static object HandleMsg(RestRequestArgs args)
     {
         var msg = args.Parameters["msg"];
-        var isVer = args.Parameters["verify"] == Config.Instance.Verify;
-        if (!string.IsNullOrEmpty(msg) && isVer)
+        TShock.Log.ConsoleDebug($"ChattyBridge Receive: {msg}");
+        if (args.Parameters["verify"] != Config.Instance.Verify)
         {
-            try
+            return new RestObject("403") { Response = "ChattyBridge Token Verify Error!" };
+        }
+        try
+        {
+            var json = JObject.Parse(msg);
+            if (json.TryGetValue("type", out var type))
             {
-                var sourceMsg = Encoding.UTF8.GetString(Convert.FromBase64String(msg));
-                var json = JObject.Parse(sourceMsg);
-                if (json.TryGetValue("type", out var type))
+                switch (type.ToString())
                 {
-                    switch (type.ToString())
+                    case "player_join":
                     {
-                        case "player_join":
-                        {
-                            var jobj = json.ToObject<PlayerJoinMessage>()!;
-                            TShock.Utils.Broadcast(string.Join(Config.Instance.MessageFormat.JoinFormat, jobj.ServerName, jobj.Name), jobj.RGB[0], jobj.RGB[1], jobj.RGB[2]);
-                            break;
-                        }
-
-                        case "player_leave":
-                        {
-                            var jobj = json.ToObject<PlayerLeaveMessage>()!;
-                            TShock.Utils.Broadcast(string.Join(Config.Instance.MessageFormat.LeaveFormat, jobj.ServerName, jobj.Name), jobj.RGB[0], jobj.RGB[1], jobj.RGB[2]);
-                            break;
-                        }
-                        case "player_chat":
-                        {
-                            var jobj = json.ToObject<PlayerChatMessage>()!;
-                            TShock.Utils.Broadcast(string.Join(Config.Instance.MessageFormat.ChatFormat, jobj.ServerName, jobj.Name, jobj.Text), jobj.RGB[0], jobj.RGB[1], jobj.RGB[2]);
-                            break;
-                        }
-                        default:
-                            TShock.Log.ConsoleError(GetString($"接收到未知类型:{type}"));
-                            break;
+                        var joinMsg = json.ToObject<PlayerJoinMessage>()!;
+                        TShock.Utils.Broadcast(string.Format(Config.Instance.MessageFormat.JoinFormat, joinMsg.ServerName, joinMsg.Name), joinMsg.RGB[0], joinMsg.RGB[1], joinMsg.RGB[2]);
+                        break;
                     }
+
+                    case "player_leave":
+                    {
+                        var leaveMsg = json.ToObject<PlayerLeaveMessage>()!;
+                        TShock.Utils.Broadcast(string.Format(Config.Instance.MessageFormat.LeaveFormat, leaveMsg.ServerName, leaveMsg.Name), leaveMsg.RGB[0], leaveMsg.RGB[1], leaveMsg.RGB[2]);
+                        break;
+                    }
+                    case "player_chat":
+                    {
+                        var chatMsg = json.ToObject<PlayerChatMessage>()!;
+                        TShock.Utils.Broadcast(string.Format(Config.Instance.MessageFormat.ChatFormat, chatMsg.ServerName, chatMsg.Name, chatMsg.Text), chatMsg.RGB[0], chatMsg.RGB[1], chatMsg.RGB[2]);
+                        break;
+                    }
+                    default:
+                        TShock.Log.ConsoleError(GetString($"[聊天桥] 接收到未知类型:{type}"));
+                        break;
                 }
             }
-            catch (Exception ex)
-            {
-                TShock.Log.ConsoleError(ex.ToString());
-            }
-
         }
-        return new RestObject("200");
+        catch (Exception ex)
+        {
+            return new RestObject("500") { Response = $"An error occurred in the processing of the message: {ex.Message}" };
+        }
+        return new RestObject("200") { Response = "Message Send Successfully!" };
     }
 
-    private void SendMessage(string msg)
+    private void SendMsg(string msg)
     {
-        Task.Run(() =>
+        Task.Run(async () =>
         {
-            var baseStr = Convert.ToBase64String(Encoding.UTF8.GetBytes(msg));
             foreach (var host in Config.Instance.RestHost)
             {
                 try
                 {
-                    var url = $"http://{host}{RestAPI}";
-                    this.HttpGet(url, new Dictionary<string, string>()
+                    var url = $"http://{host}/chat";
+                    await this.HttpGet(url, new Dictionary<string, string>
                     {
-                        { "msg", baseStr },
+                        { "msg", msg },
                         { "verify", Config.Instance.Verify }
                     });
                 }
-                catch
+                catch (Exception ex)
                 {
-                    TShock.Log.ConsoleError(GetString($"[聊天桥] 信息发送失败，目标地址:{host}"));
+                    TShock.Log.ConsoleError(GetString($"[聊天桥] 信息发送失败，目标地址:{host}\n错误信息:{ex}"));
                 }
             }
         });
     }
 
-    public void HttpGet(string url, Dictionary<string, string> playload)
+    private async Task HttpGet(string url, Dictionary<string, string> payload)
     {
-        var urlBuild = new UriBuilder(url);
-        var param = HttpUtility.ParseQueryString(urlBuild.Query);
-        foreach (var (key, value) in playload)
+        var urlBuilder = new UriBuilder(url);
+        var param = HttpUtility.ParseQueryString(urlBuilder.Query);
+        foreach (var (key, value) in payload)
         {
             param[key] = value;
         }
-
-        urlBuild.Query = param.ToString();
-        this.Client.Send(new HttpRequestMessage(HttpMethod.Get, url));
+        urlBuilder.Query = param.ToString();
+        var response = await this._client.GetAsync(urlBuilder.ToString());
+        try
+        {
+            TShock.Log.ConsoleDebug($"ChattyBridge Send: {payload["msg"]}");
+            response.EnsureSuccessStatusCode();
+        }
+        catch (HttpRequestException e)
+        {
+            TShock.Log.ConsoleError($"[ChattyBridge] Error: {e.Message}");
+        }
+        finally
+        {
+            TShock.Log.ConsoleDebug($"ChattyBridage Response: {await response.Content.ReadAsStringAsync()}");
+        }
     }
 
     private void OnLeave(LeaveEventArgs args)
@@ -149,7 +152,7 @@ public class Plugin : LazyPlugin
         }
 
         var msg = new PlayerLeaveMessage(player).ToJson();
-        this.SendMessage(msg);
+        this.SendMsg(msg);
     }
 
     private void OnGreet(GreetPlayerEventArgs args)
@@ -161,7 +164,7 @@ public class Plugin : LazyPlugin
         }
 
         var msg = new PlayerJoinMessage(player).ToJson();
-        this.SendMessage(msg);
+        this.SendMsg(msg);
     }
 
     private void OnChat(ServerChatEventArgs args)
@@ -172,7 +175,12 @@ public class Plugin : LazyPlugin
             return;
         }
 
-        if (!Config.Instance.ForwardCommamd &&
+        if (!player.IsLoggedIn)
+        {
+            return;
+        }
+
+        if (!Config.Instance.ForwardCommand &&
             (args.Text.StartsWith(TShock.Config.Settings.CommandSilentSpecifier)
             || args.Text.StartsWith(TShock.Config.Settings.CommandSpecifier)))
         {
@@ -180,6 +188,6 @@ public class Plugin : LazyPlugin
         }
 
         var msg = new PlayerChatMessage(player, args.Text).ToJson();
-        this.SendMessage(msg);
+        this.SendMsg(msg);
     }
 }

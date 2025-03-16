@@ -1,5 +1,7 @@
 using Newtonsoft.Json;
+using System.Globalization;
 using System.IO.Compression;
+using System.Reflection;
 using System.Text;
 using System.Timers;
 using TerrariaApi.Server;
@@ -26,6 +28,8 @@ internal class PluginManagementContext
     private Dictionary<string, PluginContext> CloudPluginCache => this._cloudPluginCache ??= this.ExtractPluginsFromCloud();
 
     public static readonly PluginManagementContext Instance = new();
+
+    public readonly CultureInfo CultureInfo;
 
 
     /// <summary>
@@ -91,6 +95,14 @@ internal class PluginManagementContext
 
     private PluginManagementContext()
     {
+        this.CultureInfo = (CultureInfo) typeof(TShock).Assembly.GetType("TShockAPI.I18n")!.GetProperty(
+            "TranslationCultureInfo",
+            BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+        if (string.IsNullOrEmpty(this.CultureInfo.Name))
+        {
+            this.CultureInfo = new CultureInfo("en-US");
+        }
+        
         this._timer.AutoReset = true;
         this._timer.Enabled = true;
         this._timer.Interval = 60 * 10 * 1000;
@@ -210,7 +222,7 @@ internal class PluginManagementContext
             }
         }
 
-        var pluginAssemblyNames = plugins as string[] ?? plugins.ToArray();
+        var pluginAssemblyNames = plugins.ToArray();
         pluginAssemblyNames.ForEach(InstallPlugin);
         var ed = this.ResolvePluginDependencies(pluginAssemblyNames);
         ed.ForEach(InstallPlugin);
@@ -225,15 +237,15 @@ internal class PluginManagementContext
     /// <exception cref="Exception"></exception>
     public string[] ResolvePluginDependencies(IEnumerable<string> pluginAssemblyNames)
     {
-        var externalDependencies = new HashSet<string>();
+        var externalDependencies = new List<string>();
         foreach (var n in pluginAssemblyNames)
         {
-            if (!this.ClouldPluginManifests.TryGetValue(n, out var latestPluginInfo))
+            if(this.ClouldPluginManifests.TryGetValue(n, out var ext))
             {
-                throw new Exception($"Plugin with assembly name {n} not found in the manifest.");
+                externalDependencies.AddRange(ext.Dependencies);
+                externalDependencies.AddRange(this.ResolvePluginDependencies(ext.Dependencies));
             }
-            latestPluginInfo.Dependencies.ForEach(d => externalDependencies.Add(d));
         }
-        return externalDependencies.ToArray();
+        return externalDependencies.ToHashSet().ToArray();
     }
 }

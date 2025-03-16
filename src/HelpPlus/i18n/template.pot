@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: HelpPlus\n"
-"POT-Creation-Date: 2024-09-07 18:08:46+0000\n"
-"PO-Revision-Date: 2024-09-07 18:08:46+0000\n"
+"POT-Creation-Date: 2025-01-29 16:02:50+0000\n"
+"PO-Revision-Date: 2025-01-29 16:02:50+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -21,6 +21,11 @@ msgstr ""
 #: ../../Help.cs:228
 #, csharp-format
 msgid "{0}{1}的帮助:"
+msgstr ""
+
+#: ../../Help.cs:145
+#, csharp-format
+msgid "{0}执行了/{1}。"
 msgstr ""
 
 #: ../../Help.cs:260
@@ -55,6 +60,10 @@ msgstr ""
 #: ../../Help.cs:185
 #, csharp-format
 msgid "无效用法.正确用法: {0}help <命令/页码>"
+msgstr ""
+
+#: ../../Help.cs:29
+msgid "更好的Help"
 msgstr ""
 
 #: ../../Help.cs:247

@@ -9,11 +9,10 @@ public class Main : TerrariaPlugin
 {
     public override string Author => "Leader";
 
-    public override string Description => "离线give";
+    public override string Description => GetString("离线give");
 
-    public override string Name => "CGive";
-
-    public override Version Version => new Version(1, 0, 0, 6);
+    public override string Name => System.Reflection.Assembly.GetExecutingAssembly().GetName().Name!;
+    public override Version Version => new Version(1, 0, 0, 8);
 
     public Main(Terraria.Main game)
         : base(game)
@@ -50,7 +49,7 @@ public class Main : TerrariaPlugin
         {
             return new RestObject()
             {
-                Error = GetString("没有找到注册名为") + text + GetString("的账户")
+                Error = GetString($"没有找到注册名为{text}的账户")
             };
         }
         var list = new List<Warehouse>();
@@ -61,7 +60,7 @@ public class Main : TerrariaPlugin
                 continue;
             }
             var array = item2.cmd.Split(' ');
-            if (array.Length < 3 || (!(array[0].ToLower() == specifier + "give") && !(array[0].ToLower() == specifier + "g")))
+            if (array.Length < 3 || (array[0].ToLower() != specifier + "give" && array[0].ToLower() != specifier + "g"))
             {
                 continue;
             }

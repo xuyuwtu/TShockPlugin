@@ -25,26 +25,64 @@ internal static class Login
             if (packetId == (byte) PacketTypes.ClientUUID)
             {
                 var player = TShock.Players[instance.whoAmI];
+                
                 instance.ResetReader();
                 instance.reader.BaseStream.Position = readOffset;
+                
                 var uuid = instance.reader.ReadString();
+                
                 if (string.IsNullOrEmpty(player.Name))
                 {
                     player.Kick("[Cai白名单]玩家名获取失败!");
                     return false;
                 }
-
-                RestObject re = new () { { "type", "whitelistV2" }, { "name", player.Name }, { "uuid", uuid }, { "ip", player.IP } };
-                if (!MessageHandle.IsWebsocketConnected)
+                
+                if (CaiBotApi.WhiteListCaches.TryGetValue(player.Name, out var whiteListCache))
                 {
-                    TShock.Log.ConsoleError("[CaiBot]机器人处于未连接状态, 玩家无法加入。\n" +
-                                            "如果你不想使用Cai白名单，可以在tshock/CaiBot.json中将其关闭。");
-                    player.Kick("[CaiBot]机器人处于未连接状态, 玩家无法加入。");
-
-                    return false;
+                    if (DateTime.Now - whiteListCache.Item1 <= TimeSpan.FromSeconds(10))
+                    {
+                        if (!CheckWhite(player.Name,whiteListCache.Item2))
+                        {
+                            return false;
+                        }
+                        HandleLogin(player);
+                        
+                        return orig(instance, ref packetId, ref readOffset, ref start, ref length, ref messageType, maxPackets);
+                    }
                 }
 
-                _ = MessageHandle.SendDateAsync(re.ToJson());
+                if (!CaiBotApi.IsWebsocketConnected)
+                {
+                    if (CaiBotApi.WhiteListCaches.TryGetValue(player.Name, out var whiteListCache2)) //从缓存处读取白名单
+                    {
+                        TShock.Log.ConsoleWarn("[CaiBot]正在使用白名单缓存验证玩家...");
+                        if (!CheckWhite(player.Name, whiteListCache2.Item2))
+                        {
+                            return false;
+                        }
+                        HandleLogin(player);
+                    }
+                    else
+                    {
+                        TShock.Log.ConsoleError("[CaiBot]机器人处于未连接状态, 玩家无法加入。\n" +
+                                                "如果你不想使用Cai白名单，可以在tshock/CaiBot.json中将其关闭。");
+                        player.Disconnect("[CaiBot]机器人处于未连接状态, 玩家无法加入。");
+                        return false;
+                    }
+
+                    
+                }
+                else
+                {
+                                    
+                    PacketWriter packetWriter = new ();
+                    packetWriter.SetType("whitelistV2")
+                        .Write("name", player.Name)
+                        .Write("uuid", uuid)
+                        .Write("ip", player.IP)
+                        .Send();
+                }
+                
             }
         }
         catch (Exception ex)
@@ -83,7 +121,7 @@ internal static class Login
         {
             if (type == PacketTypes.ContinueConnecting2)
             {
-                player.DataWhenJoined = new PlayerData(player);
+                player.DataWhenJoined = new PlayerData(true);
                 player.DataWhenJoined.CopyCharacter(player);
                 args.Handled = true;
             }
@@ -125,7 +163,7 @@ internal static class Login
                     TShock.Log.ConsoleInfo($"[Cai白名单]玩家[{name}](IP: {plr.IP})没有添加白名单...");
                     plr.SilentKickInProgress = true;
                     plr.Disconnect($"[Cai白名单]没有添加白名单!\n" +
-                                   $"请在群{number}内发送'添加白名单 角色名字'");
+                                   $"请在群{number}内发送'添加白名单 {plr.Name}'");
                     return false;
                 }
                 case 403:
@@ -167,8 +205,9 @@ internal static class Login
         return true;
     }
 
-    internal static bool HandleLogin(TSPlayer player, string password)
+    internal static bool HandleLogin(TSPlayer player)
     {
+        var password = Guid.NewGuid().ToString();
         var account = TShock.UserAccounts.GetUserAccountByName(player.Name);
         if (account != null)
         {

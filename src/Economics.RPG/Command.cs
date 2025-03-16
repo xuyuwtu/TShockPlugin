@@ -29,6 +29,11 @@ public class Command
                     args.Player.SendErrorMessage(GetString($"等级 {args.Parameters[0]} 不存在！ "));
                     return;
                 }
+                if (ranklevel.SoleOccupation && RPG.PlayerLevelManager.HasLevel(ranklevel.Name))
+                {
+                    args.Player.SendErrorMessage(GetString("此职业全服唯一，已经存在此职业无法升级。"));
+                    return;
+                }
                 if (ranklevel.SelectedWeapon.Count > 0 && !ranklevel.SelectedWeapon.Contains(args.Player.SelectedItem.netID))
                 {
                     args.Player.SendErrorMessage(GetString($"升级至 {args.Parameters[0]} 需要手持武器{string.Join(",", ranklevel.SelectedWeapon.Select(i => TShock.Utils.GetItemById(i).Name))}！ "));
@@ -57,7 +62,7 @@ public class Command
                 args.Player.SendInfoMessage(GetString("请选择一个升级:"));
                 foreach (var info in level.RankLevels)
                 {
-                    args.Player.SendInfoMessage(GetString($"/rank {info.Name}({string.Join(" ", info.RedemptionRelationshipsOption.Select(x=>$"{x.CurrencyType}x{x.Number}"))})"));
+                    args.Player.SendInfoMessage(GetString($"/rank {info.Name}({string.Join(" ", info.RedemptionRelationshipsOption.Select(x => $"{x.CurrencyType}x{x.Number}"))})"));
                 }
             }
         }

@@ -1,8 +1,8 @@
-﻿using Terraria;
+﻿using LazyAPI;
+using Terraria;
 using Terraria.ID;
 using TerrariaApi.Server;
 using TShockAPI;
-using LazyAPI;
 using TShockAPI.Hooks;
 using static TShockAPI.GetDataHandlers;
 
@@ -12,9 +12,9 @@ namespace LifemaxExtra;
 public class LifemaxExtra : LazyPlugin
 {
     public override string Author => "佚名 & 肝帝熙恩 & 少司命";
-    public override string Description => "提升生命值上限";
-    public override string Name => "LifemaxExtra";
-    public override Version Version => new Version(1, 0, 0, 10);
+    public override string Description => GetString("提升生命值上限");
+    public override string Name => System.Reflection.Assembly.GetExecutingAssembly().GetName().Name!;
+    public override Version Version => new Version(1, 0, 1, 0);
 
     public LifemaxExtra(Main game) : base(game)
     {
@@ -263,7 +263,7 @@ public class LifemaxExtra : LazyPlugin
         }
         ply.TPlayer.statManaMax = currency;
         ply.TPlayer.statManaMax2 = currency;
-        ply.TPlayer.statMana = currency;
+        //ply.TPlayer.statMana = currency;
         ply.SendData(PacketTypes.PlayerMana, null, ply.Index);
         ply.SendData(PacketTypes.EffectMana, null, ply.Index, raise);
     }
@@ -294,7 +294,7 @@ public class LifemaxExtra : LazyPlugin
         }
         ply.TPlayer.statLifeMax = currency;
         ply.TPlayer.statLifeMax2 = currency;
-        ply.TPlayer.statLife = currency;
+        //ply.TPlayer.statLife = currency;
         ply.SendData(PacketTypes.PlayerHp, null, ply.Index);
         ply.SendData(PacketTypes.EffectHeal, null, ply.Index, raise);
     }

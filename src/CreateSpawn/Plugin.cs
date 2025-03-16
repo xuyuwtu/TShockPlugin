@@ -2,7 +2,6 @@
 using Terraria;
 using TerrariaApi.Server;
 using TShockAPI;
-using TShockAPI.Hooks;
 
 namespace CreateSpawn;
 
@@ -11,11 +10,10 @@ public class Plugin : LazyPlugin
 {
     public override string Author => "少司命";
 
-    public override string Description => "出生建筑";
+    public override string Description => GetString("出生建筑");
 
-    public override string Name => "CreateSpawn";
-
-    public override Version Version => new Version(1, 0, 0, 4);
+    public override string Name => System.Reflection.Assembly.GetExecutingAssembly().GetName().Name!;
+    public override Version Version => new Version(1, 0, 0, 5);
 
 
     private bool create = false;

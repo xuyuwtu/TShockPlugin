@@ -26,11 +26,11 @@ public class Plugin : TerrariaPlugin
 
     public override string Author => "少司命";
 
-    public override string Description => Assembly.GetExecutingAssembly().GetName().Name!;
+    public override string Description => GetString("复制然后修改其他玩家的背包");
 
     public override string Name => Assembly.GetExecutingAssembly().GetName().Name!;
 
-    public override Version Version => new Version(1, 0, 2);
+    public override Version Version => new Version(1, 0, 5);
 
     private readonly Dictionary<TSPlayer, ModifyData> TempData = new();
     public Plugin(Main game) : base(game)
@@ -77,11 +77,11 @@ public class Plugin : TerrariaPlugin
                 modify.SourcePlayerData.RestoreCharacter(args.Player);
                 TShock.CharacterDB.InsertPlayerData(args.Player);
                 this.TempData.Remove(args.Player);
-                args.Player.SendSuccessMessage("修改保存成功！");
+                args.Player.SendSuccessMessage(GetString("修改保存成功！"));
             }
             else
             {
-                args.Player.SendErrorMessage("你没有对玩家的信息进行修改，无需保存！");
+                args.Player.SendErrorMessage(GetString("你没有对玩家的信息进行修改，无需保存！"));
             }
         }
         else if (args.Parameters.Count > 0)
@@ -96,7 +96,7 @@ public class Plugin : TerrariaPlugin
                 TShock.CharacterDB.InsertPlayerData(args.Player);
                 //复制
                 target.PlayerData.RestoreCharacter(args.Player);
-                args.Player.SendSuccessMessage("正在查看{0}的人物信息，可以对背包进行修改，使用/rm save 进行保存。", args.Parameters[0]);
+                args.Player.SendSuccessMessage(GetString("正在查看{0}的人物信息，可以对背包进行修改，使用/rm save 进行保存。"), args.Parameters[0]);
             }
             else
             {
@@ -114,14 +114,18 @@ public class Plugin : TerrariaPlugin
                     TShock.CharacterDB.InsertPlayerData(args.Player);
                     //复制
                     TempPlayer.PlayerData.RestoreCharacter(args.Player);
-                    args.Player.SendSuccessMessage("正在查看{0}的人物信息，可以对背包进行修改，使用/rm save 进行保存。", args.Parameters[0]);
+                    args.Player.SendSuccessMessage(GetString("正在查看{0}的人物信息，可以对背包进行修改，使用/rm save 进行保存。"), args.Parameters[0]);
                 }
                 else
                 {
-                    args.Player.SendErrorMessage("目标玩家不存在!");
+                    args.Player.SendErrorMessage(GetString("目标玩家不存在!"));
                 }
 
             }
+        }
+        else
+        {
+            args.Player.SendErrorMessage(GetString("用法:\n/rm <玩家名> - 查看玩家信息\n/rm save - 保存修改"));
         }
     }
 
@@ -143,49 +147,41 @@ public class Plugin : TerrariaPlugin
     /// <returns></returns>
     public PlayerData CopyCharacter(TSPlayer player)
     {
-        var PlayerData = new PlayerData(player)
+        var PlayerData = new PlayerData(true)
         {
             health = player.TPlayer.statLife > 0 ? player.TPlayer.statLife : 1,
             maxHealth = player.TPlayer.statLifeMax,
             mana = player.TPlayer.statMana,
-            maxMana = player.TPlayer.statManaMax
+            maxMana = player.TPlayer.statManaMax,
+            spawnX = player.TPlayer.SpawnX,
+            spawnY = player.TPlayer.SpawnY,
+            extraSlot = player.TPlayer.extraAccessory ? 1 : 0,
+            skinVariant = player.TPlayer.skinVariant,
+            hair = player.TPlayer.hair,
+            hairDye = player.TPlayer.hairDye,
+            hairColor = player.TPlayer.hairColor,
+            pantsColor = player.TPlayer.pantsColor,
+            shirtColor = player.TPlayer.shirtColor,
+            underShirtColor = player.TPlayer.underShirtColor,
+            shoeColor = player.TPlayer.shoeColor,
+            hideVisuals = player.TPlayer.hideVisibleAccessory,
+            skinColor = player.TPlayer.skinColor,
+            eyeColor = player.TPlayer.eyeColor,
+            questsCompleted = player.TPlayer.anglerQuestsFinished,
+            usingBiomeTorches = player.TPlayer.UsingBiomeTorches ? 1 : 0,
+            happyFunTorchTime = player.TPlayer.happyFunTorchTime ? 1 : 0,
+            unlockedBiomeTorches = player.TPlayer.unlockedBiomeTorches ? 1 : 0,
+            currentLoadoutIndex = player.TPlayer.CurrentLoadoutIndex,
+            ateArtisanBread = player.TPlayer.ateArtisanBread ? 1 : 0,
+            usedAegisCrystal = player.TPlayer.usedAegisCrystal ? 1 : 0,
+            usedAegisFruit = player.TPlayer.usedAegisFruit ? 1 : 0,
+            usedArcaneCrystal = player.TPlayer.usedArcaneCrystal ? 1 : 0,
+            usedGalaxyPearl = player.TPlayer.usedGalaxyPearl ? 1 : 0,
+            usedGummyWorm = player.TPlayer.usedGummyWorm ? 1 : 0,
+            usedAmbrosia = player.TPlayer.usedAmbrosia ? 1 : 0,
+            unlockedSuperCart = player.TPlayer.unlockedSuperCart ? 1 : 0,
+            enabledSuperCart = player.TPlayer.enabledSuperCart ? 1 : 0
         };
-        if (player.sX > 0 && player.sY > 0)
-        {
-            PlayerData.spawnX = player.sX;
-            PlayerData.spawnY = player.sY;
-        }
-        else
-        {
-            PlayerData.spawnX = player.TPlayer.SpawnX;
-            PlayerData.spawnY = player.TPlayer.SpawnY;
-        }
-        PlayerData.extraSlot = player.TPlayer.extraAccessory ? 1 : 0;
-        PlayerData.skinVariant = player.TPlayer.skinVariant;
-        PlayerData.hair = player.TPlayer.hair;
-        PlayerData.hairDye = player.TPlayer.hairDye;
-        PlayerData.hairColor = player.TPlayer.hairColor;
-        PlayerData.pantsColor = player.TPlayer.pantsColor;
-        PlayerData.shirtColor = player.TPlayer.shirtColor;
-        PlayerData.underShirtColor = player.TPlayer.underShirtColor;
-        PlayerData.shoeColor = player.TPlayer.shoeColor;
-        PlayerData.hideVisuals = player.TPlayer.hideVisibleAccessory;
-        PlayerData.skinColor = player.TPlayer.skinColor;
-        PlayerData.eyeColor = player.TPlayer.eyeColor;
-        PlayerData.questsCompleted = player.TPlayer.anglerQuestsFinished;
-        PlayerData.usingBiomeTorches = player.TPlayer.UsingBiomeTorches ? 1 : 0;
-        PlayerData.happyFunTorchTime = player.TPlayer.happyFunTorchTime ? 1 : 0;
-        PlayerData.unlockedBiomeTorches = player.TPlayer.unlockedBiomeTorches ? 1 : 0;
-        PlayerData.currentLoadoutIndex = player.TPlayer.CurrentLoadoutIndex;
-        PlayerData.ateArtisanBread = player.TPlayer.ateArtisanBread ? 1 : 0;
-        PlayerData.usedAegisCrystal = player.TPlayer.usedAegisCrystal ? 1 : 0;
-        PlayerData.usedAegisFruit = player.TPlayer.usedAegisFruit ? 1 : 0;
-        PlayerData.usedArcaneCrystal = player.TPlayer.usedArcaneCrystal ? 1 : 0;
-        PlayerData.usedGalaxyPearl = player.TPlayer.usedGalaxyPearl ? 1 : 0;
-        PlayerData.usedGummyWorm = player.TPlayer.usedGummyWorm ? 1 : 0;
-        PlayerData.usedAmbrosia = player.TPlayer.usedAmbrosia ? 1 : 0;
-        PlayerData.unlockedSuperCart = player.TPlayer.unlockedSuperCart ? 1 : 0;
-        PlayerData.enabledSuperCart = player.TPlayer.enabledSuperCart ? 1 : 0;
 
         var inventory = player.TPlayer.inventory;
         var armor = player.TPlayer.armor;

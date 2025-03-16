@@ -9,10 +9,10 @@ namespace PersonalPermission;
 [ApiVersion(2, 1)]
 public class PPMain : TerrariaPlugin
 {
-    public override string Name => "PersonalPermission";
-    public override Version Version => new Version(1, 1, 0, 3);
+    public override string Name => System.Reflection.Assembly.GetExecutingAssembly().GetName().Name!;
+    public override Version Version => new Version(1, 1, 0, 5);
     public override string Author => "Megghy，肝帝熙恩更新1449";
-    public override string Description => "允许为玩家单独设置权限.";
+    public override string Description => GetString("允许为玩家单独设置权限.");
     public PPMain(Main game) : base(game)
     {
     }
@@ -40,7 +40,7 @@ public class PPMain : TerrariaPlugin
     void OnReload(ReloadEventArgs args)
     {
         TShock.Players.Where(p => p != null && p.Account != null).ForEach(p => p.SetData("PersonalPermission", this.GetPPGroup(DB.GetPermissions(p.Account.ID))));
-        TShock.Log.ConsoleInfo("已重载玩家个人权限.");
+        TShock.Log.ConsoleInfo(GetString("已重载玩家个人权限."));
     }
     Group GetPPGroup(List<string> list)
     {
@@ -87,7 +87,7 @@ public class PPMain : TerrariaPlugin
                             }
                             else if (acclist.Count == 0)
                             {
-                                plr.SendErrorMessage($"未找到名称中包含 {cmd[1]} 的玩家.");
+                                plr.SendErrorMessage(GetString($"未找到名称中包含 {cmd[1]} 的玩家."));
                             }
                             else
                             {
@@ -96,7 +96,7 @@ public class PPMain : TerrariaPlugin
                         }
                         else
                         {
-                            plr.SendInfoMessage($"无效的命令. /pp add [C/66E5B5:玩家名] [C/66E5B5:权限]");
+                            plr.SendInfoMessage(GetString("无效的命令. /pp add [C/66E5B5:玩家名] [C/66E5B5:权限]"));
                         }
                         break;
                     case "del":
@@ -109,7 +109,7 @@ public class PPMain : TerrariaPlugin
                             }
                             else if (acclist.Count == 0)
                             {
-                                plr.SendErrorMessage($"未找到名称中包含 {cmd[1]} 的玩家.");
+                                plr.SendErrorMessage(GetString($"未找到名称中包含 {cmd[1]} 的玩家."));
                             }
                             else
                             {
@@ -118,7 +118,7 @@ public class PPMain : TerrariaPlugin
                         }
                         else
                         {
-                            plr.SendInfoMessage($"无效的命令. /pp del [C/66E5B5:玩家名] [C/66E5B5:权限]");
+                            plr.SendInfoMessage(GetString($"无效的命令. /pp del [C/66E5B5:玩家名] [C/66E5B5:权限]"));
                         }
                         break;
                     case "list":
@@ -131,17 +131,17 @@ public class PPMain : TerrariaPlugin
                             }
                             else if (acclist.Count == 0)
                             {
-                                plr.SendErrorMessage($"未找到名称中包含 {cmd[1]} 的玩家.");
+                                plr.SendErrorMessage(GetString($"未找到名称中包含 {cmd[1]} 的玩家."));
                             }
                             else
                             {
                                 var data = DB.GetPermissions(acclist[0].ID);
-                                plr.SendInfoMessage($"玩家 {acclist[0].Name} 的所有权限: ({data.Count} 条)\n{string.Join(", ", data)}");
+                                plr.SendInfoMessage(GetString($"玩家 {acclist[0].Name} 的所有权限: ({data.Count} 条)\n{string.Join(", ", data)}"));
                             }
                         }
                         else
                         {
-                            plr.SendInfoMessage($"无效的命令. /pp list [C/66E5B5:玩家名]");
+                            plr.SendInfoMessage(GetString("无效的命令. /pp list [C/66E5B5:玩家名]"));
                         }
                         break;
                     case "search":
@@ -149,11 +149,11 @@ public class PPMain : TerrariaPlugin
                         {
                             var list = new List<string>();
                             DB.GetAllPermissions().Where(data => data.Value.Contains(cmd[1])).ForEach(data => list.Add((TShock.UserAccounts.GetUserAccountByID(data.Key) ?? new UserAccount()).Name));
-                            plr.SendInfoMessage($"拥有权限 {cmd[1]} 的所有玩家: ({list.Count} 位)\n{string.Join(", ", list)}");
+                            plr.SendInfoMessage(GetString($"拥有权限 {cmd[1]} 的所有玩家: ({list.Count} 位)\n{string.Join(", ", list)}"));
                         }
                         else
                         {
-                            plr.SendInfoMessage($"无效的命令. /pp search [C/66E5B5:权限名]");
+                            plr.SendInfoMessage(GetString("无效的命令. /pp search [C/66E5B5:权限名]"));
                         }
                         break;
                     default:
@@ -169,11 +169,11 @@ public class PPMain : TerrariaPlugin
         catch (Exception ex) { TShock.Log.ConsoleError(ex.Message); }
         void Help()
         {
-            plr.SendInfoMessage($"可用命令:\n" +
-                    $"/pp add [C/66E5B5:玩家名] [C/66E5B5:权限]\n" +
-                    $"/pp del [C/66E5B5:玩家名] [C/66E5B5:权限]\n" +
-                    $"/pp list [C/66E5B5:玩家名]\n" +
-                    $"/pp search [C/66E5B5:权限名]\n");
+            plr.SendInfoMessage(GetString("可用命令:\n") +
+                    GetString("/pp add [C/66E5B5:玩家名] [C/66E5B5:权限]\n") +
+                    GetString("/pp del [C/66E5B5:玩家名] [C/66E5B5:权限]\n") +
+                    GetString("/pp list [C/66E5B5:玩家名]\n") +
+                    GetString("/pp search [C/66E5B5:权限名]\n"));
         }
         void Add(UserAccount account, string perm)
         {
@@ -184,16 +184,16 @@ public class PPMain : TerrariaPlugin
                 if (DB.SetPermissions(account.ID, data))
                 {
                     TShock.Players.FirstOrDefault(p => p?.Name == account.Name)?.GetData<Group>("PersonalPermission")?.AddPermission(perm);
-                    plr.SendSuccessMessage($"已为玩家 {account.Name} 添加权限 {perm}.");
+                    plr.SendSuccessMessage(GetString($"已为玩家 {account.Name} 添加权限 {perm}."));
                 }
                 else
                 {
-                    plr.SendErrorMessage($"添加权限失败.");
+                    plr.SendErrorMessage(GetString("添加权限失败."));
                 }
             }
             else
             {
-                plr.SendErrorMessage($"玩家 {account.Name} 已存在权限 {perm}.");
+                plr.SendErrorMessage(GetString($"玩家 {account.Name} 已存在权限 {perm}."));
             }
         }
         void Del(UserAccount account, string perm)
@@ -205,16 +205,16 @@ public class PPMain : TerrariaPlugin
                 if (DB.SetPermissions(account.ID, data))
                 {
                     TShock.Players.FirstOrDefault(p => p?.Name == account.Name)?.GetData<Group>("PersonalPermission")?.RemovePermission(perm);
-                    plr.SendSuccessMessage($"已为玩家 {account.Name} 移除权限 {perm}.");
+                    plr.SendSuccessMessage(GetString($"已为玩家 {account.Name} 移除权限 {perm}."));
                 }
                 else
                 {
-                    plr.SendErrorMessage($"移除权限失败.");
+                    plr.SendErrorMessage(GetString("移除权限失败."));
                 }
             }
             else
             {
-                plr.SendErrorMessage($"玩家 {account.Name} 未存在权限 {perm}.");
+                plr.SendErrorMessage(GetString($"玩家 {account.Name} 未存在权限 {perm}."));
             }
         }
     }

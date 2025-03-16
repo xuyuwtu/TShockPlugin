@@ -20,11 +20,10 @@ public class Plugin : TerrariaPlugin
 
     public override string Author => "White制作,Stone·Free汉化整合，肝帝熙恩更新适配1449";
 
-    public override string Description => "提供攻击NPC跳出浮动文字效果";
+    public override string Description => GetString("提供攻击NPC跳出浮动文字效果");
 
-    public override string Name => "CriticalHit!";
-
-    public override Version Version => new Version(1, 2, 2);
+    public override string Name => System.Reflection.Assembly.GetExecutingAssembly().GetName().Name!;
+    public override Version Version => new Version(1, 2, 3);
 
     public Plugin(Main game)
         : base(game)

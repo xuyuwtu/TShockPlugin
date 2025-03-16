@@ -1,6 +1,6 @@
 ﻿using Economics.RPG.Converter;
-using EconomicsAPI.Model;
 using EconomicsAPI.Configured;
+using EconomicsAPI.Model;
 using Newtonsoft.Json;
 
 namespace Economics.RPG.Model;
@@ -21,6 +21,9 @@ public class Level
 
     [JsonProperty("升级广播")]
     public string RankBroadcast { get; set; } = string.Empty;
+
+    [JsonProperty("唯一职业")]
+    public bool SoleOccupation { get; set; }
 
     [JsonProperty("手持武器")]
     public HashSet<int> SelectedWeapon { get; set; } = new();

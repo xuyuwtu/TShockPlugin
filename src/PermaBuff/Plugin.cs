@@ -13,9 +13,8 @@ public class Plugin : TerrariaPlugin
 
     public override string Description => Assembly.GetExecutingAssembly().GetName().Name!;
 
-    public override string Name => Assembly.GetExecutingAssembly().GetName().Name!;
-
-    public override Version Version => new Version(1, 0, 2);
+    public override string Name => System.Reflection.Assembly.GetExecutingAssembly().GetName().Name!;
+    public override Version Version => new Version(1, 0, 5);
 
     private readonly string PATH = Path.Combine(TShock.SavePath, "permbuff.json");
 
@@ -38,9 +37,9 @@ public class Plugin : TerrariaPlugin
         ServerApi.Hooks.NetGreetPlayer.Register(this, this.OnJoin);
         ServerApi.Hooks.ServerLeave.Register(this, this.OnLeave);
         ServerApi.Hooks.GameUpdate.Register(this, this.Update);
-        Commands.ChatCommands.Add(new Command("permabuff.use", this.PAbuff, "permabuff","pbuff"));
-        Commands.ChatCommands.Add(new Command("gpermabuff.use", this.GPbuff, "gpermabuff","gpbuff"));
-        Commands.ChatCommands.Add(new Command("clearbuffs.use", this.Cbuff, "clearbuffs","cbuff"));
+        Commands.ChatCommands.Add(new Command("permabuff.use", this.PAbuff, "permabuff", "pbuff"));
+        Commands.ChatCommands.Add(new Command("gpermabuff.use", this.GPbuff, "gpermabuff", "gpbuff"));
+        Commands.ChatCommands.Add(new Command("clearbuffs.use", this.Cbuff, "clearbuffs", "cbuff"));
         GeneralHooks.ReloadEvent += this._reloadHandler;
     }
     protected override void Dispose(bool disposing)
@@ -65,7 +64,7 @@ public class Plugin : TerrariaPlugin
             }
             catch (Exception ex)
             {
-                TShock.Log.Error($"permabuff.json 读取错误:{ex}");
+                TShock.Log.Error(GetString($"permabuff.json 读取错误:{ex}"));
             }
         }
         this.config.Write(this.PATH);
@@ -78,13 +77,13 @@ public class Plugin : TerrariaPlugin
             var buffs = Playerbuffs.GetBuffs(args.Player.Name);
             if (buffs.Count == 0)
             {
-                args.Player.SendSuccessMessage("没有永久buff，无需清空");
+                args.Player.SendSuccessMessage(GetString("没有永久buff，无需清空"));
             }
             else
             {
                 buffs.Clear();
                 buffs.TrimExcess();
-                args.Player.SendSuccessMessage("已清空所有永久buff");
+                args.Player.SendSuccessMessage(GetString("已清空所有永久buff"));
                 args.Player.SendData(PacketTypes.PlayerBuff, null, args.Player.Index);
             }
         }
@@ -95,7 +94,7 @@ public class Plugin : TerrariaPlugin
             {
                 Playerbuffs.PlayerBuffs.Clear();
                 DB.ClearTable();
-                args.Player.SendSuccessMessage("已清空所有玩家永久buff");
+                args.Player.SendSuccessMessage(GetString("已清空所有玩家永久buff"));
                 foreach (var plr in TShock.Players.Where(p => p != null && p.IsLoggedIn && p.Active))
                 {
                     plr.SendData(PacketTypes.PlayerBuff, null, plr.Index);
@@ -103,12 +102,12 @@ public class Plugin : TerrariaPlugin
             }
             else
             {
-                args.Player.SendErrorMessage("权限不足，无法执行此命令");
+                args.Player.SendErrorMessage(GetString("权限不足，无法执行此命令"));
             }
         }
         else
         {
-            args.Player.SendErrorMessage("未知参数，请使用 '/clearbuffs' 或 '/cbuff all'");
+            args.Player.SendErrorMessage(GetString("未知参数，请使用 '/clearbuffs' 或 '/cbuff all'"));
         }
     }
 
@@ -119,38 +118,38 @@ public class Plugin : TerrariaPlugin
             var ply = TSPlayer.FindByNameOrID(args.Parameters[1]).Find(x => x.Name == args.Parameters[1]);
             if (ply == null)
             {
-                args.Player.SendErrorMessage("玩家不存在或玩家不在线!");
+                args.Player.SendErrorMessage(GetString("玩家不存在或玩家不在线!"));
                 return;
             }
             if (int.TryParse(args.Parameters[0], out var buffid))
             {
                 if (this.config.LimitBuffs.Contains(buffid))
                 {
-                    args.Player.SendErrorMessage("此buff不可被添加!");
+                    args.Player.SendErrorMessage(GetString("此buff不可被添加!"));
                     return;
                 }
                 var playerbuffs = Playerbuffs.GetBuffs(ply.Name);
                 if (playerbuffs.Contains(buffid))
                 {
                     Playerbuffs.DelBuff(args.Player.Name, buffid);
-                    args.Player.SendSuccessMessage($"移除一个永久buff {TShock.Utils.GetBuffName(buffid)}!");
-                    ply.SendSuccessMessage($"{args.Player.Name} 移除了你的一个永久buff {TShock.Utils.GetBuffName(buffid)}");
+                    args.Player.SendSuccessMessage(GetString($"移除一个永久buff {TShock.Utils.GetBuffName(buffid)}!"));
+                    ply.SendSuccessMessage(GetString($"{args.Player.Name} 移除了你的一个永久buff {TShock.Utils.GetBuffName(buffid)}"));
                 }
                 else
                 {
                     Playerbuffs.AddBuff(args.Player.Name, buffid);
-                    args.Player.SendSuccessMessage($"成功为添加一个永久buff {TShock.Utils.GetBuffName(buffid)}!");
-                    ply.SendSuccessMessage($"{args.Player.Name} 为你添加一个永久buff {TShock.Utils.GetBuffName(buffid)}");
+                    args.Player.SendSuccessMessage(GetString($"成功为添加一个永久buff {TShock.Utils.GetBuffName(buffid)}!"));
+                    ply.SendSuccessMessage(GetString($"{args.Player.Name} 为你添加一个永久buff {TShock.Utils.GetBuffName(buffid)}"));
                 }
             }
             else
             {
-                args.Player.SendErrorMessage("无效的buffid");
+                args.Player.SendErrorMessage(GetString("无效的buffid"));
             }
         }
         else
         {
-            args.Player.SendErrorMessage("语法错误! 请输入/gpermabuff <玩家名> <buffid>");
+            args.Player.SendErrorMessage(GetString("语法错误! 请输入/gpermabuff <buffid> <玩家名>"));
         }
     }
 
@@ -162,29 +161,29 @@ public class Plugin : TerrariaPlugin
             {
                 if (this.config.LimitBuffs.Contains(buffid))
                 {
-                    args.Player.SendErrorMessage("此buff不可被添加!");
+                    args.Player.SendErrorMessage(GetString("此buff不可被添加!"));
                     return;
                 }
                 var playerbuffs = Playerbuffs.GetBuffs(args.Player.Name);
                 if (playerbuffs.Contains(buffid))
                 {
                     Playerbuffs.DelBuff(args.Player.Name, buffid);
-                    args.Player.SendSuccessMessage($"移除一个永久buff {TShock.Utils.GetBuffName(buffid)}!");
+                    args.Player.SendSuccessMessage(GetString($"移除一个永久buff {TShock.Utils.GetBuffName(buffid)}!"));
                 }
                 else
                 {
                     Playerbuffs.AddBuff(args.Player.Name, buffid);
-                    args.Player.SendSuccessMessage($"成功为自己添加一个永久buff {TShock.Utils.GetBuffName(buffid)}!");
+                    args.Player.SendSuccessMessage(GetString($"成功为自己添加一个永久buff {TShock.Utils.GetBuffName(buffid)}!"));
                 }
             }
             else
             {
-                args.Player.SendErrorMessage("无效的buffid");
+                args.Player.SendErrorMessage(GetString("无效的buffid"));
             }
         }
         else
         {
-            args.Player.SendErrorMessage("语法错误! 请输入/permabuff <buffid>");
+            args.Player.SendErrorMessage(GetString("语法错误! 请输入/permabuff <buffid>"));
         }
     }
 

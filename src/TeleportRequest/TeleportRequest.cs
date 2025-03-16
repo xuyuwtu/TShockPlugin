@@ -23,11 +23,10 @@ public class TeleportRequest : TerrariaPlugin
 
     internal static string tpConfigPath => Path.Combine(TShock.SavePath, "tpconfig.json");
 
-    public override string Description => "传送前需要被传送者接受或拒绝请求";
+    public override string Description => GetString("传送前需要被传送者接受或拒绝请求");
 
-    public override string Name => "传送请求";
-
-    public override Version Version => new Version(1, 0, 2);
+    public override string Name => System.Reflection.Assembly.GetExecutingAssembly().GetName().Name!;
+    public override Version Version => new Version(1, 0, 3);
 
     public TeleportRequest(Main game)
         : base(game)

@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using TShockAPI;
-using static DonotFuck.Plugin;
 
 namespace DonotFuck;
 
@@ -24,13 +23,10 @@ internal class Commands
 
             if (args.Parameters[0].ToLower() == "log" && args.Player.HasPermission("DonotFuck.admin"))
             {
-                var Enabled = Configuration.Instance.EnableLog;
-                Configuration.Instance.EnableLog = !Enabled;
-                var Status = Enabled ?
-                    GetString("禁用"):
-                    GetString("启用");
-
-                args.Player.SendSuccessMessage(GetString($"已{Status}敏感词记录功能。"));
+                Configuration.Instance.EnableLog = !Configuration.Instance.EnableLog;
+                args.Player.SendSuccessMessage(Configuration.Instance.EnableLog
+                    ? GetString($"已启用敏感词记录功能。")
+                    : GetString($"已禁用敏感词记录功能。"));
                 Configuration.Save();
                 return;
             }
@@ -40,7 +36,7 @@ internal class Commands
                 Configuration.Instance.DisposeLog();
                 var dirinfo = new DirectoryInfo(Path.Combine(TShock.SavePath, Configuration._Directory));
                 foreach (var file in dirinfo.GetFiles("*.log"))
-                { 
+                {
                     file.Delete();
                 }
                 args.Player.SendSuccessMessage(GetString("《脏话纪录》文件夹已成功清空。"));

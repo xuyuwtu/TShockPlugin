@@ -1,5 +1,5 @@
-﻿using System.Timers;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
+using System.Timers;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
@@ -19,9 +19,9 @@ public class TestPlugin : TerrariaPlugin
 {
     #region 插件信息
     public override string Author => "GK 阁下 羽学";
-    public override string Description => "自定义怪物出没时的血量,当然不止这些！";
-    public override string Name => "自定义怪物血量";
-    public override Version Version => new Version(1, 0, 4, 39);
+    public override string Description => GetString("自定义怪物出没时的血量,当然不止这些！");
+    public override string Name => System.Reflection.Assembly.GetExecutingAssembly().GetName().Name!;
+    public override Version Version => new Version(1, 0, 4, 41);
     #endregion
 
     #region 全局变量
@@ -76,11 +76,11 @@ public class TestPlugin : TerrariaPlugin
 
     private void OnInitialize(EventArgs args)
     {
-        Commands.ChatCommands.Add(new Command("CustomMonster", this.CRC, new string[] { "重读自定义怪物血量","reload" })
+        Commands.ChatCommands.Add(new Command("CustomMonster", this.CRC, new string[] { "重读自定义怪物血量", "reload" })
         {
             HelpText = GetString("输入 /重读自定义怪物血量 会重新读取重读自定义怪物血量表")
         });
-        Commands.ChatCommands.Add(new Command("CustomMonster",this.CMD, new string[] { "召唤自定义怪物血量怪物","smc" })
+        Commands.ChatCommands.Add(new Command("CustomMonster", this.CMD, new string[] { "召唤自定义怪物血量怪物", "smc" })
         {
             HelpText = GetString("输入 /召唤自定义怪物血量怪物 怪物标志 会召唤指定标记的怪物(无视召唤条件)")
         });
@@ -119,13 +119,10 @@ public class TestPlugin : TerrariaPlugin
         Update.Start();
         if (this.Config.Advertisement)
         {
-            Console.WriteLine(" ------------ " + this.Name +
-                GetString(" 版本:") +
-                this.Version?.ToString() +
-                ((this.Beta > 0) ? " Beta" + this.Beta +
-                GetString(" 已启动! --------") :
-                GetString(" 已启动! --------------")));
-
+            var x = this.Beta > 0
+                ? GetString($"Beta{this.Beta} 已启动! --------")
+                : GetString("已启动! --------------");
+            Console.WriteLine($" ------------ {this.Name} 版本:{this.Version} {x}");
             Console.WriteLine(GetString(" >>> 如果使用过程中出现什么问题可前往QQ群232109072交流反馈."));
             Console.WriteLine(GetString(" >>> 本插件免费请勿上当受骗,您可在QQ群232109072中获取最新插件."));
             if (this.Beta > 0)
@@ -147,8 +144,9 @@ public class TestPlugin : TerrariaPlugin
         this.Config.Write(this.Path);
 
         args.Player.SendSuccessMessage(GetString("[自定义怪物血量] 隐藏配置项:") +
-            (this.Config.HideUselessConfig ? GetString("已隐藏" ) :
-            GetString("已显示")));
+            (this.Config.HideUselessConfig
+                ? GetString("已隐藏")
+                : GetString("已显示")));
     }
     #endregion
 
@@ -197,8 +195,7 @@ public class TestPlugin : TerrariaPlugin
                     }
                     else
                     {
-                        TShock.Log.ConsoleError(GetString("[自定义怪物血量]您读入的额外配置 ") + files[i].Name +
-                            GetString(" 插件版本高于本插件版本,配置可能无法正常使用,请升级插件后使用！"));
+                        TShock.Log.ConsoleError(GetString($"[自定义怪物血量]您读入的额外配置 {files[i].Name} 插件版本高于本插件版本,配置可能无法正常使用,请升级插件后使用！"));
                     }
                     var num = config.MonsterGroup.Length;
                     var num2 = this.Config.MonsterGroup.Length;
@@ -213,20 +210,17 @@ public class TestPlugin : TerrariaPlugin
                     {
                         this.Config.IgnoreMonsterTable = this.Config.IgnoreMonsterTable.Union(config.IgnoreMonsterTable).ToList();
                     }
-                    Console.WriteLine(GetString("[自定义怪物血量] 额外配置[") + files[i].Name + 
-                        GetString("]增添了") + num +
-                        GetString("条配置"));
+                    Console.WriteLine(GetString($"[自定义怪物血量] 额外配置[{files[i].Name}]增添了{num}条配置"));
                 }
                 catch (Exception ex)
                 {
-                    TShock.Log.ConsoleError(GetString("[自定义怪物血量] 额外配置[") + files[i].Name +
-                        GetString("]错误:\n") + ex.ToString() + "\n");
+                    TShock.Log.ConsoleError(GetString($"[自定义怪物血量] 额外配置[{files[i].Name}]错误:\n{ex}\n"));
                 }
             }
         }
         catch (Exception ex2)
         {
-            TShock.Log.ConsoleError(GetString("[自定义怪物血量] 配置错误:\n") + ex2.ToString() + "\n");
+            TShock.Log.ConsoleError(GetString($"[自定义怪物血量] 配置错误:\n{ex2}\n"));
         }
     }
 
@@ -334,10 +328,10 @@ public class TestPlugin : TerrariaPlugin
     {
         if (Owner == Main.myPlayer && this.Config.UnifiedMonsterProjectileDamageCorrection != 1f)
         {
-            Damage = (int)(Damage * this.Config.UnifiedMonsterProjectileDamageCorrection);
+            Damage = (int) (Damage * this.Config.UnifiedMonsterProjectileDamageCorrection);
         }
         return orig.Invoke(spawnSource, X, Y, SpeedX, SpeedY, Type, Damage, KnockBack, Owner, ai0, ai1, ai2);
-    } 
+    }
     #endregion
 
     #region NPC设为默认
@@ -371,7 +365,7 @@ public class TestPlugin : TerrariaPlugin
             }
         }
         orig.Invoke(self, Type, spawnparams);
-    } 
+    }
     #endregion
 
     #region 怪物生成事件
@@ -425,7 +419,7 @@ public class TestPlugin : TerrariaPlugin
                 {
                     continue;
                 }
-                num2 = (MonGroup.StartServerTimeType == 1) ? ((int)(DateTime.UtcNow - this.OServerDataTime).TotalDays) : ((MonGroup.StartServerTimeType != 2) ? ((int)(DateTime.UtcNow - this.OServerDataTime).TotalHours) : ((int)(DateTime.UtcNow.Date - this.OServerDataTime.Date).TotalDays));
+                num2 = (MonGroup.StartServerTimeType == 1) ? ((int) (DateTime.UtcNow - this.OServerDataTime).TotalDays) : ((MonGroup.StartServerTimeType != 2) ? ((int) (DateTime.UtcNow - this.OServerDataTime).TotalHours) : ((int) (DateTime.UtcNow.Date - this.OServerDataTime.Date).TotalDays));
                 if ((MonGroup.Difficulty.Length != 0 && !MonGroup.Difficulty.Contains(Main.GameMode)) || Sundry.SeedRequirement(MonGroup.MapSeed))
                 {
                     continue;
@@ -496,12 +490,12 @@ public class TestPlugin : TerrariaPlugin
                 var num4 = activePlayerCount * MonGroup.PersonSecondCoefficient;
                 num4 += MonGroup.AppearanceSeconds;
                 num4 += num2 * MonGroup.ServiceOpenSecond;
-                num4 += (int)lNKC * MonGroup.KillCountSecond;
+                num4 += (int) lNKC * MonGroup.KillCountSecond;
                 if (num4 < 1)
                 {
                     args.Handled = true;
                     Main.npc[args.NpcId].active = false;
-                    Console.WriteLine(Main.npc[args.NpcId].FullName + GetString("定义时间过小被阻止生成"));
+                    Console.WriteLine(GetString($"{Main.npc[args.NpcId].FullName}定义时间过小被阻止生成"));
                     return;
                 }
                 maxtime = num4;
@@ -610,7 +604,7 @@ public class TestPlugin : TerrariaPlugin
                 var num5 = activePlayerCount * MonGroup.PlayerCoefficient;
                 num5 += MonGroup.NPCLife;
                 num5 += num2 * MonGroup.ServiceOpenCoefficient;
-                num5 += (int)lNKC * MonGroup.KillCountCoefficient;
+                num5 += (int) lNKC * MonGroup.KillCountCoefficient;
                 if (!MonGroup.OverrideOriginalLife)
                 {
                     num5 += Main.npc[args.NpcId].lifeMax;
@@ -630,7 +624,7 @@ public class TestPlugin : TerrariaPlugin
                 var num6 = activePlayerCount * MonGroup.PlayerEnhancementCoefficient;
                 num6 += MonGroup.EnhancementCoefficient;
                 num6 += num2 * MonGroup.ServiceOpenEnhancementCoefficient;
-                num6 += (int)lNKC * MonGroup.KillCountEnhancementCoefficient;
+                num6 += (int) lNKC * MonGroup.KillCountEnhancementCoefficient;
                 if (!MonGroup.OverrideOriginalEnhancement)
                 {
                     num6 += Main.npc[args.NpcId].strengthMultiplier;
@@ -665,7 +659,7 @@ public class TestPlugin : TerrariaPlugin
         {
             if (this.Config.UnifiedMonsterLifeMaxMultiplier != 1.0 && this.Config.UnifiedMonsterLifeMaxMultiplier > 0.0)
             {
-                Main.npc[args.NpcId].lifeMax = (int)(Main.npc[args.NpcId].lifeMax * this.Config.UnifiedMonsterLifeMaxMultiplier);
+                Main.npc[args.NpcId].lifeMax = (int) (Main.npc[args.NpcId].lifeMax * this.Config.UnifiedMonsterLifeMaxMultiplier);
                 if (Main.npc[args.NpcId].lifeMax < 1)
                 {
                     Main.npc[args.NpcId].lifeMax = 1;
@@ -679,7 +673,7 @@ public class TestPlugin : TerrariaPlugin
             }
             if (this.Config.UnifiedMonsterEnhancementFactor != 1.0 && this.Config.UnifiedMonsterEnhancementFactor > 0.0)
             {
-                var num7 = (float)(Main.npc[args.NpcId].strengthMultiplier * this.Config.UnifiedMonsterEnhancementFactor);
+                var num7 = (float) (Main.npc[args.NpcId].strengthMultiplier * this.Config.UnifiedMonsterEnhancementFactor);
                 if (num7 > 1000f)
                 {
                     num7 = 1000f;
@@ -736,7 +730,7 @@ public class TestPlugin : TerrariaPlugin
     #region 发送数据
     private void SendData(SendDataEventArgs args)
     {
-        if (args.Handled || (int)args.MsgId != 65 || args.number5 != 0 || args.number != 0)
+        if (args.Handled || (int) args.MsgId != 65 || args.number5 != 0 || args.number != 0)
         {
             return;
         }
@@ -799,8 +793,7 @@ public class TestPlugin : TerrariaPlugin
                 {
                     if (!LNpcs[args.npc.whoAmI].Config!.DoNotAnnounceInfo)
                     {
-                        TShock.Utils.Broadcast(GetString("攻略成功: ") + args.npc.FullName +
-                            GetString(" 已被击败."), Convert.ToByte(130), Convert.ToByte(50), Convert.ToByte(230));
+                        TShock.Utils.Broadcast(GetString($"攻略成功: {args.npc.FullName} 已被击败."), Convert.ToByte(130), Convert.ToByte(50), Convert.ToByte(230));
                     }
                     foreach (var item in LNpcs[args.npc.whoAmI].Config!.DeathAudio)
                     {
@@ -1079,7 +1072,7 @@ public class TestPlugin : TerrariaPlugin
                             var num3 = lNPC2.PlayerCount * lNPC2.Config.PersonSecondCoefficient;
                             num3 += lNPC2.Config.AppearanceSeconds;
                             num3 += lNPC2.OSTime * lNPC2.Config.ServiceOpenSecond;
-                            num3 += (int)lNPC2.LKC * lNPC2.Config.KillCountSecond;
+                            num3 += (int) lNPC2.LKC * lNPC2.Config.KillCountSecond;
                             if (num3 < 1)
                             {
                                 num3 = -1;
@@ -1092,16 +1085,12 @@ public class TestPlugin : TerrariaPlugin
                                 {
                                     if (!lNPC2.Config.DoNotAnnounceInfo)
                                     {
-                                        TShock.Utils.Broadcast(GetString("注意: ") + val3.FullName +
-                                            GetString(" 受服务器人数增多影响攻略时间减少 ") + value + GetString(" 秒剩") +
-                                            (int)(num3 - lNPC2.TiemN) + GetString("秒."), Convert.ToByte(255), Convert.ToByte(255), Convert.ToByte(100));
+                                        TShock.Utils.Broadcast(GetString($"注意: {val3.FullName} 受服务器人数增多影响攻略时间减少 {value} 秒剩{(int) (num3 - lNPC2.TiemN)}秒."), Convert.ToByte(255), Convert.ToByte(255), Convert.ToByte(100));
                                     }
                                 }
                                 else if (num2 < num3 && !lNPC2.Config.DoNotAnnounceInfo)
                                 {
-                                    TShock.Utils.Broadcast(GetString("注意: ") + val3.FullName +
-                                        GetString(" 受服务器人数增多影响攻略时间增加 ") + Math.Abs(value) + GetString("秒剩") +
-                                        (int)(num3 - lNPC2.TiemN) + GetString("秒."), Convert.ToByte(255), Convert.ToByte(255), Convert.ToByte(100));
+                                    TShock.Utils.Broadcast(GetString($"注意: {val3.FullName} 受服务器人数增多影响攻略时间增加 {Math.Abs(value)}秒剩{(int) (num3 - lNPC2.TiemN)}秒."), Convert.ToByte(255), Convert.ToByte(255), Convert.ToByte(100));
                                 }
                             }
                         }
@@ -1110,7 +1099,7 @@ public class TestPlugin : TerrariaPlugin
                             var num4 = activePlayerCount * lNPC2.Config.PlayerCoefficient;
                             num4 += lNPC2.Config.NPCLife;
                             num4 += lNPC2.OSTime * lNPC2.Config.ServiceOpenCoefficient;
-                            num4 += (int)lNPC2.LKC * lNPC2.Config.KillCountCoefficient;
+                            num4 += (int) lNPC2.LKC * lNPC2.Config.KillCountCoefficient;
                             if (!lNPC2.Config.OverrideOriginalLife)
                             {
                                 num4 += val3.lifeMax;
@@ -1127,7 +1116,7 @@ public class TestPlugin : TerrariaPlugin
                                 {
                                     if (this.Config.UnifiedMonsterLifeMaxMultiplier != 1.0 && this.Config.UnifiedMonsterLifeMaxMultiplier > 0.0)
                                     {
-                                        num5 = (int)(num5 * this.Config.UnifiedMonsterLifeMaxMultiplier);
+                                        num5 = (int) (num5 * this.Config.UnifiedMonsterLifeMaxMultiplier);
                                         if (num5 < 1)
                                         {
                                             num5 = 1;
@@ -1141,7 +1130,7 @@ public class TestPlugin : TerrariaPlugin
                                 if (lifeMax != num5)
                                 {
                                     var life = val3.life;
-                                    var num6 = (int)(life * (num5 / (double)lifeMax));
+                                    var num6 = (int) (life * (num5 / (double) lifeMax));
                                     if (num6 < 1)
                                     {
                                         num6 = 1;
@@ -1153,16 +1142,12 @@ public class TestPlugin : TerrariaPlugin
                                     {
                                         if (!lNPC2.Config.DoNotAnnounceInfo)
                                         {
-                                            TShock.Utils.Broadcast(GetString("注意: ") + val3.FullName +
-                                                GetString(" 受服务器人数增多影响怪物血量减少 ") + value2 +
-                                                GetString(" 剩") + val3.life + ".", Convert.ToByte(255), Convert.ToByte(255), Convert.ToByte(100));
+                                            TShock.Utils.Broadcast(GetString($"注意: {val3.FullName} 受服务器人数增多影响怪物血量减少 {value2} 剩{val3.life}."), Convert.ToByte(255), Convert.ToByte(255), Convert.ToByte(100));
                                         }
                                     }
                                     else if (life < num6 && !lNPC2.Config.DoNotAnnounceInfo)
                                     {
-                                        TShock.Utils.Broadcast(GetString("注意: ") +
-                                            val3.FullName + GetString(" 受服务器人数增多影响怪物血量增加 ") + Math.Abs(value2) +
-                                            GetString("剩") + val3.life + ".", Convert.ToByte(255), Convert.ToByte(255), Convert.ToByte(100));
+                                        TShock.Utils.Broadcast(GetString($"注意: {val3.FullName} 受服务器人数增多影响怪物血量增加 {Math.Abs(value2)}剩{val3.life}."), Convert.ToByte(255), Convert.ToByte(255), Convert.ToByte(100));
                                     }
                                 }
                             }
@@ -1178,17 +1163,12 @@ public class TestPlugin : TerrariaPlugin
                         {
                             if (!lNPC2.Config.DoNotAnnounceInfo)
                             {
-                                TShock.Utils.Broadcast("注意: " + val3.FullName +
-                                    GetString(" 现身,攻略时间为 ") + lNPC2.MaxTime + 
-                                    GetString(" 秒,血量为 ") + val3.lifeMax +
-                                    GetString(",快快加入战斗吧!"), Convert.ToByte(130), Convert.ToByte(255), Convert.ToByte(170));
+                                TShock.Utils.Broadcast(GetString($"注意: {val3.FullName} 现身,攻略时间为 {lNPC2.MaxTime} 秒,血量为 {val3.lifeMax},快快加入战斗吧!"), Convert.ToByte(130), Convert.ToByte(255), Convert.ToByte(170));
                             }
                         }
                         else if (!lNPC2.Config.DoNotAnnounceInfo)
                         {
-                            TShock.Utils.Broadcast(GetString("注意: ") + val3.FullName + 
-                                GetString(" 现身,血量为 ") + val3.lifeMax +
-                                GetString(",快快加入战斗吧!"), Convert.ToByte(130), Convert.ToByte(255), Convert.ToByte(170));
+                            TShock.Utils.Broadcast(GetString($"注意: {val3.FullName} 现身,血量为 {val3.lifeMax},快快加入战斗吧!"), Convert.ToByte(130), Convert.ToByte(255), Convert.ToByte(170));
                         }
                         foreach (var item2 in lNPC2.Config.EntryAudio)
                         {
@@ -1230,14 +1210,12 @@ public class TestPlugin : TerrariaPlugin
                         goto IL_0e35;
                     }
                     var maxTime = lNPC2.MaxTime;
-                    if ((double)lNPC2.TiemN == Math.Round(maxTime * 0.5) || (double)lNPC2.TiemN == Math.Round(maxTime * 0.7) || (double)lNPC2.TiemN == Math.Round(maxTime * 0.9))
+                    if ((double) lNPC2.TiemN == Math.Round(maxTime * 0.5) || (double) lNPC2.TiemN == Math.Round(maxTime * 0.7) || (double) lNPC2.TiemN == Math.Round(maxTime * 0.9))
                     {
-                        maxTime -= (int)lNPC2.TiemN;
+                        maxTime -= (int) lNPC2.TiemN;
                         if (!lNPC2.Config.DoNotAnnounceInfo)
                         {
-                            TShock.Utils.Broadcast(GetString("注意: ") + val3.FullName +
-                                GetString(" 剩余攻略时间 ") + maxTime +
-                                GetString(" 秒."), Convert.ToByte(130), Convert.ToByte(255), Convert.ToByte(170));
+                            TShock.Utils.Broadcast(GetString($"注意: {val3.FullName} 剩余攻略时间 {maxTime} 秒."), Convert.ToByte(130), Convert.ToByte(255), Convert.ToByte(170));
                         }
                         goto IL_0e35;
                     }
@@ -1247,8 +1225,7 @@ public class TestPlugin : TerrariaPlugin
                     }
                     if (!lNPC2.Config.DoNotAnnounceInfo)
                     {
-                        TShock.Utils.Broadcast(GetString("攻略失败: ") + val3.FullName + 
-                            GetString(" 已撤离."), Convert.ToByte(190), Convert.ToByte(150), Convert.ToByte(150));
+                        TShock.Utils.Broadcast(GetString($"攻略失败: {val3.FullName} 已撤离."), Convert.ToByte(190), Convert.ToByte(150), Convert.ToByte(150));
                     }
                     var whoAmI = val3.whoAmI;
                     Main.npc[whoAmI] = new NPC();
@@ -1288,8 +1265,8 @@ public class TestPlugin : TerrariaPlugin
                             {
                                 continue;
                             }
-                            var num21 = (int)(item5.DelaySeconds * 100f);
-                            var num22 = (int)(item5.ConsumeTime * 100f);
+                            var num21 = (int) (item5.DelaySeconds * 100f);
+                            var num22 = (int) (item5.ConsumeTime * 100f);
                             if (num22 <= 0)
                             {
                                 continue;
@@ -1887,7 +1864,7 @@ public class TestPlugin : TerrariaPlugin
                                         item10.PercentageHeal = 100;
                                     }
                                     var val4 = val3;
-                                    val4.life += (int)(val3.lifeMax * (item10.PercentageHeal / 100.0));
+                                    val4.life += (int) (val3.lifeMax * (item10.PercentageHeal / 100.0));
                                     if (val3.life > val3.lifeMax)
                                     {
                                         val3.life = val3.lifeMax;
@@ -1955,7 +1932,7 @@ public class TestPlugin : TerrariaPlugin
                             {
                                 Main.projectile[n].active = false;
                                 Main.projectile[n].type = 0;
-                                TSPlayer.All.SendData((PacketTypes)27, "", n, 0f, 0f, 0f, 0);
+                                TSPlayer.All.SendData((PacketTypes) 27, "", n, 0f, 0f, 0f, 0);
                             }
                         }
                     }
@@ -1989,11 +1966,11 @@ public class TestPlugin : TerrariaPlugin
                             {
                                 continue;
                             }
-                            if (num13 > 0 && Sundry.WithinRange(val5.TPlayer.Center, (int)num26, (int)num27, num13 * 16))
+                            if (num13 > 0 && Sundry.WithinRange(val5.TPlayer.Center, (int) num26, (int) num27, num13 * 16))
                             {
                                 if (num12 > 0)
                                 {
-                                    if (!Sundry.WithinRange(val5.TPlayer.Center, (int)num26, (int)num27, num12 * 16))
+                                    if (!Sundry.WithinRange(val5.TPlayer.Center, (int) num26, (int) num27, num12 * 16))
                                     {
                                         Sundry.PullTP(val5, num26, num27, num14);
                                     }
@@ -2039,7 +2016,7 @@ public class TestPlugin : TerrariaPlugin
                                     {
                                         var TopTips = item12.TopTip;
                                         var val6 = new Color(255, 255, 255);
-                                        val5.SendData((PacketTypes)119, TopTips, (int)val6.PackedValue, val5.X, val5.Y, 0f, 0);
+                                        val5.SendData((PacketTypes) 119, TopTips, (int) val6.PackedValue, val5.X, val5.Y, 0f, 0);
                                     }
                                 }
                             }
@@ -2052,8 +2029,7 @@ public class TestPlugin : TerrariaPlugin
                         NetMessage.SendData(23, -1, -1, NetworkText.Empty, whoAmI2, 0f, 0f, 0f, 0, 0, 0);
                         if (!lNPC2.Config.DoNotAnnounceInfo)
                         {
-                            TShock.Utils.Broadcast(GetString("攻略失败: ") + val3.FullName +
-                                GetString(" 已撤离."), Convert.ToByte(190), Convert.ToByte(150), Convert.ToByte(150));
+                            TShock.Utils.Broadcast(GetString($"攻略失败: {val3.FullName} 已撤离."), Convert.ToByte(190), Convert.ToByte(150), Convert.ToByte(150));
                         }
                     }
                 end_IL_022f:;
@@ -2152,7 +2128,7 @@ public class TestPlugin : TerrariaPlugin
         {
             if (this.Config.ErrorLogs)
             {
-                TShock.Log.ConsoleError(GetString("自定义怪物血量时钟:") + ex.ToString());
+                TShock.Log.ConsoleError(GetString($"自定义怪物血量时钟:{ex}"));
             }
         }
         ULock = false;
@@ -2327,6 +2303,6 @@ public class TestPlugin : TerrariaPlugin
                 LNkc!.Add(new LNKC(int.Parse(array2[0]), long.Parse(array2[1])));
             }
         }
-    } 
+    }
     #endregion
 }

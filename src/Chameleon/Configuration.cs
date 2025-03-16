@@ -1,9 +1,5 @@
-﻿using Newtonsoft.Json;
-using TShockAPI;
-using LazyAPI;
+﻿using LazyAPI.Attributes;
 using LazyAPI.ConfigFiles;
-using System.Collections.Generic;
-using System.IO;
 
 namespace Chameleon;
 
@@ -37,7 +33,7 @@ internal class Configuration : JsonConfigBase<Configuration>
     {
         " ↓↓ 请看下面的提示以进服 ↓↓",
         " \r\n         看完下面的再点哦→",
-        " 1. 在\"服务器密码\"中输入自己的密码, 以后加服时输入这个密码即可，相当于为你自己的账号设置密码",
+        " 1. 在\"服务器密码\"中输入自己的密码, 以后加服时输入这个密码即可\n相当于为你自己的账号设置密码",
         " 2. 阅读完毕后请重新加入"
     };
 

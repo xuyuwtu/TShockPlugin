@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: LifemaxExtra\n"
-"POT-Creation-Date: 2024-12-17 03:46:36+0000\n"
-"PO-Revision-Date: 2024-12-17 03:46:37+0000\n"
+"POT-Creation-Date: 2025-01-20 06:56:55+0000\n"
+"PO-Revision-Date: 2025-01-20 06:56:56+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -84,6 +84,10 @@ msgstr ""
 #: ../../PluginContainer.cs:124
 #, csharp-format
 msgid "成功设置玩家`{0}`魔法上限{1}!"
+msgstr ""
+
+#: ../../PluginContainer.cs:15
+msgid "提升生命值上限"
 msgstr ""
 
 #: ../../PluginContainer.cs:249

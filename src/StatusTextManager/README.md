@@ -109,8 +109,7 @@ namespace STMTest1;
 // ReSharper disable once UnusedType.Global
 public class Plugin : TerrariaPlugin
 {
-    public override string Name => "STMTest1";
-
+    public override string Name => System.Reflection.Assembly.GetExecutingAssembly().GetName().Name!;
     public Plugin(Main game) : base(game)
     {
     }
@@ -140,6 +139,9 @@ public class Plugin : TerrariaPlugin
 ## 更新日志
 
 ```
+v1.1.3
+重构渔夫任务点提取逻辑
+
 v1.1.0
 添加 DynamicText 类
 可插值

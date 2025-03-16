@@ -2,7 +2,6 @@
 using Economics.Skill.Internal;
 using Economics.Skill.JSInterpreter;
 using Economics.Skill.Model;
-using Economics.Skill.Model.Options.Projectile;
 using EconomicsAPI.Extensions;
 using Microsoft.Xna.Framework;
 using Terraria;
@@ -32,8 +31,11 @@ public class Utils
         {
             throw new Exception(GetString($"当前进度无法购买此技能，限制进度:{string.Join(", ", context.LimitProgress)}"));
         }
-
-        var bind = Skill.PlayerSKillManager.QuerySkillByItem(Player.Name, Player.SelectedItem.netID).Where(s => s.Skill != null && s.Skill.Hidden);
+        if (!context.LimitSkill.All(i => Skill.PlayerSKillManager.HasSkill(Player.Name, i)))
+        {
+            throw new Exception(GetString($"你当前等级无法购买此技能，限制必须购买技能:{string.Join(", ", context.LimitSkill)}"));
+        }
+        var bind = Skill.PlayerSKillManager.QuerySkillByItem(Player.Name, Player.SelectedItem.netID).Where(s => s.Skill != null && !s.Skill.Hidden);
         return context.SkillUnique && Skill.PlayerSKillManager.HasSkill(Player.Name, index)
             ? throw new Exception(GetString("此技能是唯一的不能重复绑定!"))
             : context.SkillUniqueAll && Skill.PlayerSKillManager.HasSkill(index)
@@ -46,130 +48,28 @@ public class Utils
     }
 
     /// <summary>
-    /// 通用技能触发器
-    /// </summary>
-    /// <param name="Player"></param>
-    /// <param name="skill"></param>
-    public static void EmitGeneralSkill(TSPlayer Player, SkillContext skill)
-    {
-        skill.EmitGeneralSkill(Player);
-    }
-
-
-    internal static void CycleAdapr(TSPlayer ply, Vector2 vel, Vector2 pos, ProjectileOption option, NPC? lockNpc = null)
-    {
-        foreach (var opt in option.ProjectileCycle.ProjectileCycles)
-        {
-            Vector2 _vel;
-            #region 锁定敌怪
-            if (option.LockNpcOption.Enable && option.LockNpcOption.Lock && lockNpc != null)
-            {
-                pos.Distance(lockNpc.Center);
-                _vel = (pos.DirectionTo(lockNpc.Center).SafeNormalize(-Vector2.UnitY) * lockNpc.velocity.Length()).ToLenOf(option.Speed);
-            }
-            else
-            {
-                _vel = vel.RotationAngle(option.StartAngle).ToLenOf(option.Speed);
-            }
-            #endregion
-
-            var _pos = pos + new Vector2(option.X * 16, option.Y * 16);
-            var oldpos = _pos;
-            var cpos = _pos.GetPointsOnCircle(opt.Radius * 16, option.StartAngle, opt.GrowAngle, opt.Count);
-
-            foreach (var i in Enumerable.Range(0, opt.Count))
-            {
-                JobjManager.Add(() =>
-                {
-                    if (opt.NewPos)
-                    {
-                        _vel = oldpos.DirectionTo(cpos[i]).SafeNormalize(-Vector2.UnitY).ToLenOf(option.Speed);
-                        _pos = cpos[i];
-                    }
-                    //判断锁定敌怪
-                    if (option.LockNpcOption.Enable && option.LockNpcOption.Lock && lockNpc != null)
-                    {
-                        _vel = _pos.DirectionTo(lockNpc.Center).SafeNormalize(-Vector2.UnitY).ToLenOf(option.Speed);
-                    }
-                    #region 生成弹幕
-                    var guid = Guid.NewGuid().ToString();
-                    var index = EconomicsAPI.Utils.SpawnProjectile.NewProjectile(
-                        //发射原无期
-                        ply.TPlayer.GetProjectileSource_Item(ply.TPlayer.HeldItem),
-                        //发射位置
-                        _pos,
-                        _vel * (opt.Reverse ? -1 : 1),
-                        option.ID,
-                        option.Damage,
-                        option.Knockback,
-                        ply.Index,
-                        option.AI[0],
-                        option.AI[1],
-                        option.AI[2],
-                        option.TimeLeft,
-                        guid);
-                    TSPlayer.All.SendData(PacketTypes.ProjectileNew, "", index);
-                    #endregion
-                    AIStyle.Set(Main.projectile[index], option.AISytle, guid);
-                    #region 数值重置
-
-                    if (!opt.NewPos)
-                    {
-                        _vel = _vel.RotationAngle(opt.GrowAngle).ToLenOf(option.Speed);
-                    }
-
-                    if (opt.FollowPlayer)
-                    {
-                        _pos = ply.TPlayer.Center + ply.TPlayer.ItemOffSet() + new Vector2(opt.GrowX * 16, opt.GrowY * 16);
-                    }
-                    else
-                    {
-                        _pos += new Vector2(opt.GrowX * 16, opt.GrowY * 16);
-                    }
-
-                    #endregion
-                }).AddMilliSeconds(i * opt.Dealy);
-            }
-        }
-    }
-
-
-    /// <summary>
     /// 技能触发器
     /// </summary>
     /// <param name="Player"></param>
     /// <param name="skill"></param>
     /// <param name="vel"></param>
     /// <param name="pos"></param>
-    public static void SpawnSkillProjectile(TSPlayer Player, SkillContext skill, Vector2 vel, Vector2 pos)
+    public static void SpawnSkillProjectile(TSPlayer Player, SkillContext skill, Vector2 vel, Vector2 pos, int Damage)
     {
-        EmitGeneralSkill(Player, skill);
-        foreach (var i in Enumerable.Range(0, skill.Projectiles.Count))
+        var playerskill = new PlayerSkill(skill.LoopEvent, Player);
+        foreach (var i in Enumerable.Range(0, skill.LoopEvent.LoopCount + 1))
         {
-            var proj = skill.Projectiles[i];
-            JobjManager.Add(() =>
+            JobjManager.Delayed(skill.LoopEvent.Interval * i, (args) =>
             {
-                if (!proj.AutoDirection)
+                if (args is PlayerSkill con)
                 {
-                    vel = new Vector2(proj.SpeedX, proj.SpeedY);
+                    con.Update(i, vel);
                 }
-
-                NPC? lockNpc = null;
-                if (proj.LockNpcOption.Enable)
-                {
-                    if (proj.LockNpcOption.LockCenter)
-                    {
-                        lockNpc = proj.LockNpcOption.LockMinHp ? Player.TPlayer.GetNpcInRangeByHp(proj.LockNpcOption.Range) : Player.TPlayer.GetNpcInRangeByDis(proj.LockNpcOption.Range);
-                        if (lockNpc != null)
-                        {
-                            pos = lockNpc.Center;
-                        }
-                    }
-                }
-                CycleAdapr(Player, vel, pos, proj, lockNpc);
-            }).AddMilliSeconds(proj.Dealy * i);
+            }, playerskill);
         }
     }
+
+
     /// <summary>
     /// 释放技能
     /// </summary>
@@ -181,7 +81,7 @@ public class Utils
         var pos = Player.TPlayer.Center + Player.TPlayer.ItemOffSet();
         //原始角度速度参数
         var vel = Player.TPlayer.ItemOffSet();
-        SpawnSkillProjectile(Player, skill, vel, pos);
+        SpawnSkillProjectile(Player, skill, vel, pos, Player.SelectedItem.damage);
         Interpreter.ExecuteScript(skill, Player, pos, vel);
     }
 
@@ -191,7 +91,7 @@ public class Utils
         var pos = e.Position;
         //原始角度速度参数
         var vel = e.Velocity;
-        SpawnSkillProjectile(e.Player, skill, vel, pos);
+        SpawnSkillProjectile(e.Player, skill, vel, pos, e.Damage);
         Interpreter.ExecuteScript(skill, e.Player, pos, vel);
     }
 }

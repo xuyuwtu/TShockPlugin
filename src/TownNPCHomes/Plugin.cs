@@ -12,9 +12,8 @@ public class Plugin : TerrariaPlugin
 {
     public override string Author => "棱镜 羽学优化";
 
-    public override string Name => "TownNPCHomes";
-
-    public override Version Version => new Version(1, 1, 3);
+    public override string Name => System.Reflection.Assembly.GetExecutingAssembly().GetName().Name!;
+    public override Version Version => new Version(1, 1, 4);
 
     private readonly ConcurrentDictionary<int, Vector2> npcHomePositions = new ConcurrentDictionary<int, Vector2>();
 
